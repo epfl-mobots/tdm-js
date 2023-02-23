@@ -1,0 +1,11 @@
+
+#!/bin/sh
+
+FILE=./node_modules/@mobsya-association/thymio-api/dist/thymio.js
+
+if grep -q 'req._trigger_error.msg.message' $FILE
+then
+	mv $FILE ${FILE}-orig
+	sed -e 's/msg.message../{"message":msg.message(),"line":msg.line(),"column":msg.column()}/' <${FILE}-orig >$FILE
+fi
+
