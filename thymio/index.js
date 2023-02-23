@@ -171,8 +171,8 @@ window.TDM.prototype.run = async function (program, success, failure) {
             success && success();
         }
     } catch(e) {
-        if (failure) {
-            failure(e);
+        if (failure || this.options.failure) {
+            (failure || this.options.failure)(e);
         } else {
             console.error(e);
         }
@@ -190,8 +190,8 @@ window.TDM.prototype.check = async function (program, success, failure) {
             success && success();
         }
     } catch(e) {
-        if (failure) {
-            failure(e);
+        if (failure || this.options.failure) {
+            (failure || this.options.failure)(e);
         } else {
             console.error(e);
         }
@@ -206,8 +206,8 @@ window.TDM.prototype.flash = async function (program, success, failure) {
             success && success();
         }
     } catch(e) {
-        if (failure) {
-            failure(e);
+        if (failure || this.options.failure) {
+            (failure || this.options.failure)(e);
         } else {
             console.error(e);
         }
@@ -299,8 +299,8 @@ window.TDM.runOnNode = async function (node, program, success, failure) {
         await node.unlock();
         success && success();
     } catch(e) {
-        if (failure) {
-            failure(e);
+        if (failure || this.options.failure) {
+            (failure || this.options.failure)(e);
         } else {
             console.error(e);
         }
