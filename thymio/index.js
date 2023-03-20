@@ -36,7 +36,8 @@ Build:
 // options.password: tdm password (default: none)
 // options.uuid: node uuid to connect to, or "auto" to connect automatically to the first node
 // (default: don't connect, use tdm.connect(uuid) explicitly, and tdm.close() to close)
-// options.change: function(connected) called upon connection change, or node change if !options.uuid
+// options.change: function(connected) called upon connection change
+// options.anyNodeChange: function() called upon any node change
 // options.variables: function(v) called upon variable change, or "auto" to only enable this.getVariable
 // options.events: function(name,value) called upon event sent by the robot
 // default for success (function called once code sent success): null (none)
@@ -92,11 +93,11 @@ window.TDM = function (url, options) {
             }
         });
         try {
+            // autoconnect
             if (options.uuid && this.selectedNode == null) {
                 this.connect(options.uuid);
-            } else {
-                options.change && options.change();
             }
+            options.anyNodeChange && options.anyNodeChange();
         } catch (e) {
             console.log(e)
         }
@@ -105,9 +106,8 @@ window.TDM = function (url, options) {
     client.onClose = async () => {
         if (options.uuid) {
             options.change && options.change(false);
-        } else {
-            options.change && options.change();
         }
+        options.anyNodeChange && options.anyNodeChange();
     };
 };
 
@@ -186,6 +186,9 @@ window.TDM.prototype.check = async function (program, success, failure) {
     }
     try {
         if (this.selectedNode.status == NodeStatus.ready) {
+			if (this.customEvents) {
+				await this.selectedNode.setEventsDescriptions(this.customEvents);
+            }
             await this.selectedNode.sendAsebaProgram(program, true);
             success && success();
         }
@@ -214,6 +217,7 @@ window.TDM.prototype.flash = async function (program, success, failure) {
     }
 };
 
+// (re)connect to node with specified uuid, or first available node if "auto"
 window.TDM.prototype.connect = async function (uuid) {
     if (this.selectedNode) {
         await this.close();
@@ -242,44 +246,44 @@ window.TDM.prototype.connect = async function (uuid) {
                 console.log(`Unable to lock ${node.id} (${node.name})`)
             }
         }
-        if (!this.selectedNode) {
-            continue;
-        }
-        if (this.options.variables) {
-            if (this.options.variables === "auto") {
-                this.selectedNode.onVariablesChanged = (vars) => {
-                    // store variables from map to object this.variables as Array<number>
-                    vars.forEach((val, key) => {
-                        this.variables[key] = val instanceof Number ? [val.valueOf()] : val;
-                    });
+        if (this.selectedNode) {
+            if (this.options.variables) {
+                if (this.options.variables === "auto") {
+                    this.selectedNode.onVariablesChanged = (vars) => {
+                        // store variables from map to object this.variables as Array<number>
+                        vars.forEach((val, key) => {
+                            this.variables[key] = val instanceof Number ? [val.valueOf()] : val;
+                        });
+                    }
+                } else {
+                    this.selectedNode.onVariablesChanged = (vars) => {
+                        // convert variables from map to object
+                        var vObj = {};
+                        vars.forEach((val, key) => {
+                            if (val instanceof Number) {
+                                val = [val.valueOf()];
+                            }
+                            this.variables[key] = val;
+                            vObj[key] = val;
+                        });
+
+                        this.options.variables(vObj);
+                    };
                 }
-            } else {
-                this.selectedNode.onVariablesChanged = (vars) => {
-                    // convert variables from map to object
-                    var vObj = {};
-                    vars.forEach((val, key) => {
+            }
+            if (this.options.events) {
+                this.selectedNode.onEvents = (events) => {
+                    // convert events from map to object
+                    var evObj = {};
+                    events.forEach((val, key) => {
                         if (val instanceof Number) {
                             val = [val.valueOf()];
                         }
-                        this.variables[key] = val;
-                        vObj[key] = val;
+                        this.options.events(key, val);
                     });
-
-                    this.options.variables(vObj);
                 };
             }
-        }
-        if (this.options.events) {
-            this.selectedNode.onEvents = (events) => {
-                // convert events from map to object
-                var evObj = {};
-                events.forEach((val, key) => {
-                    if (val instanceof Number) {
-                        val = [val.valueOf()];
-                    }
-                    this.options.events(key, val);
-                });
-            };
+            break;
         }
     }
 };
