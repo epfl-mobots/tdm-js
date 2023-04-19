@@ -1,0 +1,47 @@
+<!-- Minimum example to run an Aseba program on the first robot known to the TDM -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="../thymio/thymio.js"></script>
+
+<script>
+
+// tdm as a global variable, initialized once everything is loaded
+var tdm = null;
+
+// Aseba program for button "run"
+var runProgram =
+    "motor.left.target = 50\n" +
+    "motor.right.target = 50\n";
+
+// Aseba program for button "stop"
+var stopProgram =
+    "motor.left.target = 0\n" +
+    "motor.right.target = 0\n";
+
+// initialization
+window.addEventListener("load", function () {
+
+    // instantiate TDM object, the client-side connection to the local TDM
+    // default arguments: local tdm and auto-connect to first robot
+    tdm = new TDM(null, {uuid: "auto"});
+
+});
+
+</script>
+
+</head>
+
+<body>
+
+<p>
+<button onclick="tdm.run(runProgram)">Run</button>
+<button onclick="tdm.run(stopProgram)">Stop</button>
+</p>
+
+</body>
+
+</html>

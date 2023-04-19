@@ -1,0 +1,51 @@
+<!-- Minimum example to get and set the variables of the first robot known to the TDM -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="../thymio/thymio.js"></script>
+
+<script>
+
+// tdm as a global variable, initialized once everything is loaded
+var tdm = null;
+
+// initialization
+window.addEventListener("load", function () {
+
+    // instantiate TDM object, the client-side connection to the local TDM
+    // default arguments: local tdm, auto-connect to first robot and receive all variables
+    var options = {
+        uuid: "auto",
+        variables: function (dict) {
+            // dict contains variables which have changed
+            if (dict["prox.horizontal"]) {
+                // prox.horizontal has changed: display it
+                var prox_horizontal = dict["prox.horizontal"];
+                var str = prox_horizontal.map(function (val) { return val.toString(10); }).join(", ");
+                document.getElementById("prox").textContent = str;
+            }
+        }
+    };
+    tdm = new TDM(null, options);
+
+});
+
+</script>
+
+</head>
+
+<body>
+
+<p>
+<button onclick='tdm.setVariables({"leds.top": [32,0,0]})'>Red</button>
+<button onclick='tdm.setVariables({"leds.top": [0,0,32]})'>Blue</button>
+</p>
+
+<p id="prox"></p>
+
+</body>
+
+</html>
