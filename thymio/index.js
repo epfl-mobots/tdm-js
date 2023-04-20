@@ -36,6 +36,7 @@ Build:
 // options.password: tdm password (default: none)
 // options.uuid: node uuid to connect to, or "auto" to connect automatically to the first node
 // (default: don't connect, use tdm.connect(uuid) explicitly, and tdm.close() to close)
+// options.runOnConnection: program to run upon connection (default: none)
 // options.change: function(connected) called upon connection change
 // options.anyNodeChange: function() called upon any node change
 // options.variables: function(v) called upon variable change, or "auto" to only enable this.getVariable
@@ -95,7 +96,7 @@ window.TDM = function (url, options) {
         try {
             // autoconnect
             if (options.uuid && this.selectedNode == null) {
-                this.connect(options.uuid);
+                await this.connect(options.uuid);
             }
             options.anyNodeChange && options.anyNodeChange();
         } catch (e) {
@@ -242,6 +243,12 @@ window.TDM.prototype.connect = async function (uuid) {
                 await node.lock();
                 console.log("Node locked");
                 this.options.change && this.options.change(true);
+                if (this.options.runOnConnection) {
+                    // hack around async issue
+                    setTimeout(() => {
+                        this.run(this.options.runOnConnection);
+                    }, 10);
+                }
             } catch (e) {
                 console.log(`Unable to lock ${node.id} (${node.name})`)
             }
