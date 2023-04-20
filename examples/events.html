@@ -1,0 +1,69 @@
+<!-- Minimum example to exchange events with the first robot known to the TDM -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="../thymio/thymio.js"></script>
+
+<script>
+
+// tdm as a global variable, initialized once everything is loaded
+var tdm = null;
+
+// Aseba program
+var program =
+    "leds.top = [0, 0, 0]\n" +
+    "onevent button.center\n" +
+    "   if button.center != 0 then emit button_notification 0 end\n" +
+    "onevent button.forward\n" +
+    "   if button.forward != 0 then emit button_notification 1 end\n" +
+    "onevent button.backward\n" +
+    "   if button.backward != 0 then emit button_notification -1 end\n" +
+    "onevent msg\n" +
+    "   leds.top = event.args[0:2]"
+// custom events
+var customEvents = [
+    {name: "button_notification", fixed_size: 1},
+    {name: "msg", fixed_size: 3}
+];
+
+
+// initialization
+window.addEventListener("load", function () {
+
+    // instantiate TDM object, the client-side connection to the local TDM
+    // default arguments: local tdm, auto-connect to first robot, run program on connection, and receive events
+    var options = {
+        uuid: "auto",
+        runOnConnection: program,
+        events: function (name, value) {
+            switch (name) {
+            case "button_notification":
+                // button_notification: display value (0 for button.center down, 1 for button.forward down)
+                document.getElementById("button_notification").textContent = value[0].toString(10);
+            }
+        }
+    };
+    tdm = new TDM(null, options);
+    tdm.declareCustomEvents(customEvents);
+
+});
+
+</script>
+
+</head>
+
+<body>
+
+<p>
+<button onclick='tdm.emitEvent("msg", [32, 32, 0])'>Yellow</button>
+<button onclick='tdm.emitEvent("msg", [0, 32, 0])'>Green</button>
+</p>
+
+<p>button_notification: <span id="button_notification"></span></p>
+
+</body>
+
+</html>
